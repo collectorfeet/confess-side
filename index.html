@@ -2,8 +2,13 @@
 <html>
 <head>
     <title>Leave a Message! by Jayden D. Tordesillas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
+        body {
+            padding-bottom: 60px; /* Space for footer */
+        }
+
         .footer {
             position: fixed;
             left: 0;
@@ -15,6 +20,86 @@
             padding: 10px 0;
             border-top: 1px solid var(--border);
             font-size: 0.9em;
+            z-index: 1000;
+        }
+
+        /* Mobile-friendly styles */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 15px;
+                padding-bottom: 70px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 20px;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            textarea {
+                min-height: 100px;
+            }
+
+            .confession-item {
+                padding: 10px 0;
+                margin-bottom: 15px;
+            }
+
+            button {
+                width: 100%;
+                padding: 10px;
+                margin: 5px 0;
+            }
+
+            .terms-container {
+                margin: 15px 0;
+            }
+
+            #submissionResult {
+                margin-top: 20px;
+            }
+
+            #recentConfessions {
+                margin-top: 30px;
+            }
+        }
+
+        /* General improvements */
+        .confession-item {
+            border-bottom: 1px solid var(--border);
+            padding: 15px 0;
+            margin-bottom: 20px;
+        }
+
+        .confession-item:last-child {
+            border-bottom: none;
+        }
+
+        .terms-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        #error-message {
+            margin-top: 10px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        button {
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
