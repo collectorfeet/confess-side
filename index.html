@@ -1,8 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Crush Form</title>
+    <title>Leave a Message! by Jayden D. Tordesillas</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: var(--background-body);
+            color: var(--text-main);
+            text-align: center;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>	
     <h1>Leave a message</h1>
@@ -24,14 +38,16 @@
     </form>
 
     <div id="submissionResult" style="display: none;">
-        <h2>Confession Received!</h2>
+        <h2>Message Received!</h2>
         <div id="submissionDetails"></div>
         <button onclick="newConfession()">Submit another message</button>
     </div>
 
-    <div id="recentConfessions">
+    <div id="recentConfessions" style="margin-top: 2em;">
         <h2>Recent Messages</h2>
-        <div id="confessionsList"></div>
+        <div id="confessionsList">
+            <p>Loading messages...</p>
+        </div>
     </div>
 
     <script type="module">
@@ -73,16 +89,16 @@
                         const confessionDiv = document.createElement('div');
                         confessionDiv.className = 'confession-item';
                         confessionDiv.innerHTML = `
-                            <p><strong>Confession #${confession.number}</strong> - ${confession.timestamp}</p>
+                            <p><strong>Message #${confession.number}</strong> - ${confession.timestamp}</p>
                             <p><strong>From:</strong> ${confession.name}</p>
-                            <p><strong>Message:</strong><br>${confession.confession.replace(/\n/g, '<br>')}</p>
+                            <p><strong>Message:</strong><br>${confession.message.replace(/\n/g, '<br>')}</p>
                             <hr>
                         `;
                         confessionsList.appendChild(confessionDiv);
                     });
                 } else {
                     console.log("No messages found");
-                    confessionsList.innerHTML = '<p>No messages yet. Be the first to confess!</p>';
+                    confessionsList.innerHTML = '<p>No messages yet. Be the first to send a message!</p>';
                 }
             }, (error) => {
                 console.error("Database error:", error);
@@ -103,7 +119,7 @@
                 }
 
                 const name = document.getElementById('name').value;
-                const confession = document.getElementById('confession').value;
+                const message = document.getElementById('confession').value;
                 const timestamp = new Date().toLocaleString();
                 console.log("Form data collected");
 
@@ -121,7 +137,7 @@
                     console.log("Saving confession");
                     await set(ref(database, 'confessions/' + confessionNumber), {
                         name: name,
-                        confession: confession,
+                        message: message,
                         timestamp: timestamp,
                         number: confessionNumber
                     });
@@ -130,10 +146,10 @@
                     document.getElementById('confessionForm').style.display = 'none';
                     document.getElementById('submissionResult').style.display = 'block';
                     document.getElementById('submissionDetails').innerHTML = `
-                        <p><strong>Confession #${confessionNumber}</strong></p>
+                        <p><strong>Message #${confessionNumber}</strong></p>
                         <p><strong>Name:</strong> ${name}</p>
-                        <p><strong>Confession:</strong><br>${confession.replace(/\n/g, '<br>')}</p>
-                        <p><em>Your confession has been added to the list below!</em></p>
+                        <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
+                        <p><em>Your message has been added to the list below!</em></p>
                     `;
                 } catch (error) {
                     console.error("Error saving confession:", error);
@@ -159,5 +175,9 @@
             alert("Error initializing the app. Please check the console for details.");
         }
     </script>
+
+    <div class="footer">
+        Created by Jayden D. Tordesillas
+    </div>
 </body>
 </html>
