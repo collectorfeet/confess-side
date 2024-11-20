@@ -29,86 +29,135 @@
         <button onclick="newConfession()">Submit Another Confession</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+    <div id="recentConfessions">
+        <h2>Recent Confessions</h2>
+        <div id="confessionsList"></div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXg5kCtWHMKXSQ9rKsPwWA-WS-4o0gCAc",
-            authDomain: "confessionside.firebaseapp.com",
-            databaseURL: "https://confessionside-default-rtdb.firebaseio.com",
-            projectId: "confessionside",
-            storageBucket: "confessionside.firebasestorage.app",
-            messagingSenderId: "145558124396",
-            appId: "1:145558124396:web:3ca8b9a1023dc3d9fe2549",
-            measurementId: "G-50H59N3YGL"
-        };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const database = getDatabase(app);
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDXg5kCtWHMKXSQ9rKsPwWA-WS-4o0gCAc",
+                authDomain: "confessionside.firebaseapp.com",
+                databaseURL: "https://confessionside-default-rtdb.firebaseio.com",
+                projectId: "confessionside",
+                storageBucket: "confessionside.firebasestorage.app",
+                messagingSenderId: "145558124396",
+                appId: "1:145558124396:web:3ca8b9a1023dc3d9fe2549",
+                measurementId: "G-50H59N3YGL"
+            };
 
-        // Make functions available globally
-        window.saveConfession = async function(event) {
-            event.preventDefault();
-            
-            const checkbox = document.getElementById('termsCheckbox');
-            const errorMessage = document.getElementById('error-message');
-            
-            if (!checkbox.checked) {
-                errorMessage.style.display = 'block';
+            const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
+            const database = getDatabase(app);
+            console.log("Firebase initialized successfully");
+
+            // Listen for confessions updates
+            const confessionsRef = ref(database, 'confessions');
+            onValue(confessionsRef, (snapshot) => {
+                console.log("Received database update");
+                const data = snapshot.val();
+                const confessionsList = document.getElementById('confessionsList');
+                confessionsList.innerHTML = '';
+                
+                if (data) {
+                    console.log("Found confessions:", Object.keys(data).length);
+                    const confessions = Object.values(data).sort((a, b) => b.number - a.number);
+                    
+                    confessions.slice(0, 5).forEach(confession => {
+                        const confessionDiv = document.createElement('div');
+                        confessionDiv.className = 'confession-item';
+                        confessionDiv.innerHTML = `
+                            <p><strong>Confession #${confession.number}</strong> - ${confession.timestamp}</p>
+                            <p><strong>From:</strong> ${confession.name}</p>
+                            <p><strong>Message:</strong><br>${confession.confession.replace(/\n/g, '<br>')}</p>
+                            <hr>
+                        `;
+                        confessionsList.appendChild(confessionDiv);
+                    });
+                } else {
+                    console.log("No confessions found");
+                    confessionsList.innerHTML = '<p>No confessions yet. Be the first to confess!</p>';
+                }
+            }, (error) => {
+                console.error("Database error:", error);
+            });
+
+            // Make functions available globally
+            window.saveConfession = async function(event) {
+                event.preventDefault();
+                console.log("Form submission started");
+                
+                const checkbox = document.getElementById('termsCheckbox');
+                const errorMessage = document.getElementById('error-message');
+                
+                if (!checkbox.checked) {
+                    errorMessage.style.display = 'block';
+                    console.log("Terms not accepted");
+                    return false;
+                }
+
+                const name = document.getElementById('name').value;
+                const confession = document.getElementById('confession').value;
+                const timestamp = new Date().toLocaleString();
+                console.log("Form data collected");
+
+                try {
+                    console.log("Getting confession number");
+                    const countRef = ref(database, 'confessionCount');
+                    const snapshot = await get(countRef);
+                    const currentCount = snapshot.val() || 0;
+                    const confessionNumber = currentCount + 1;
+                    console.log("New confession number:", confessionNumber);
+                    
+                    console.log("Saving new count");
+                    await set(countRef, confessionNumber);
+                    
+                    console.log("Saving confession");
+                    await set(ref(database, 'confessions/' + confessionNumber), {
+                        name: name,
+                        confession: confession,
+                        timestamp: timestamp,
+                        number: confessionNumber
+                    });
+
+                    console.log("Showing success message");
+                    document.getElementById('confessionForm').style.display = 'none';
+                    document.getElementById('submissionResult').style.display = 'block';
+                    document.getElementById('submissionDetails').innerHTML = `
+                        <p><strong>Confession #${confessionNumber}</strong></p>
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Confession:</strong><br>${confession.replace(/\n/g, '<br>')}</p>
+                        <p><em>Your confession has been added to the list below!</em></p>
+                    `;
+                } catch (error) {
+                    console.error("Error saving confession:", error);
+                    alert('Error saving confession: ' + error.message);
+                }
+
                 return false;
-            }
+            };
 
-            const name = document.getElementById('name').value;
-            const confession = document.getElementById('confession').value;
-            const timestamp = new Date().toLocaleString();
+            window.newConfession = function() {
+                document.getElementById('confessionForm').reset();
+                document.getElementById('confessionForm').style.display = 'block';
+                document.getElementById('submissionResult').style.display = 'none';
+                document.getElementById('error-message').style.display = 'none';
+            };
 
-            try {
-                // Get the next confession number
-                const countRef = ref(database, 'confessionCount');
-                const snapshot = await get(countRef);
-                const currentCount = snapshot.val() || 0;
-                const confessionNumber = currentCount + 1;
-                
-                // Save the new count
-                await set(countRef, confessionNumber);
-                
-                // Save the confession
-                await set(ref(database, 'confessions/' + confessionNumber), {
-                    name: name,
-                    confession: confession,
-                    timestamp: timestamp,
-                    number: confessionNumber
-                });
+            window.showTerms = function() {
+                alert('Terms and Conditions:\n\n1. Your confession will be anonymous\n2. Be respectful and kind\n3. No harmful or inappropriate content');
+            };
 
-                // Show submission result
-                document.getElementById('confessionForm').style.display = 'none';
-                document.getElementById('submissionResult').style.display = 'block';
-                document.getElementById('submissionDetails').innerHTML = `
-                    <p><strong>Confession #${confessionNumber}</strong></p>
-                    <p><strong>Name:</strong> ${name}</p>
-                    <p><strong>Confession:</strong><br>${confession.replace(/\n/g, '<br>')}</p>
-                `;
-            } catch (error) {
-                alert('Error saving confession: ' + error.message);
-            }
-
-            return false;
-        };
-
-        window.newConfession = function() {
-            document.getElementById('confessionForm').reset();
-            document.getElementById('confessionForm').style.display = 'block';
-            document.getElementById('submissionResult').style.display = 'none';
-            document.getElementById('error-message').style.display = 'none';
-        };
-
-        window.showTerms = function() {
-            alert('Terms and Conditions:\n\n1. Your confession will be anonymous\n2. Be respectful and kind\n3. No harmful or inappropriate content');
-        };
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            alert("Error initializing the app. Please check the console for details.");
+        }
     </script>
 </body>
-</html>
+</html>    
