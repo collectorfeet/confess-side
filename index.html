@@ -5,13 +5,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
 </head>
 <body>	
-    <h1>Anonymous Confession</h1>
+    <h1>Leave a message</h1>
         
     <form id="confessionForm" onsubmit="return saveConfession(event)">
-        <label for="name">Name</label>
-            <input type="text" id="name" name="name" placeholder="Your name" required>
+        <label for="name">Codename</label>
+            <input type="text" id="name" name="name" placeholder="Your codename" required>
             
-        <label for="confession">Confession</label>
+        <label for="confession">Message</label>
             <textarea id="confession" name="confession" placeholder="Write who it is for and your message" required></textarea>
         
         <div class="terms-container">
@@ -26,11 +26,11 @@
     <div id="submissionResult" style="display: none;">
         <h2>Confession Received!</h2>
         <div id="submissionDetails"></div>
-        <button onclick="newConfession()">Submit Another Confession</button>
+        <button onclick="newConfession()">Submit another message</button>
     </div>
 
     <div id="recentConfessions">
-        <h2>Recent Confessions</h2>
+        <h2>Recent Messages</h2>
         <div id="confessionsList"></div>
     </div>
 
@@ -69,7 +69,7 @@
                     console.log("Found confessions:", Object.keys(data).length);
                     const confessions = Object.values(data).sort((a, b) => b.number - a.number);
                     
-                    confessions.slice(0, 5).forEach(confession => {
+                    confessions.forEach(confession => {
                         const confessionDiv = document.createElement('div');
                         confessionDiv.className = 'confession-item';
                         confessionDiv.innerHTML = `
@@ -81,8 +81,8 @@
                         confessionsList.appendChild(confessionDiv);
                     });
                 } else {
-                    console.log("No confessions found");
-                    confessionsList.innerHTML = '<p>No confessions yet. Be the first to confess!</p>';
+                    console.log("No messages found");
+                    confessionsList.innerHTML = '<p>No messages yet. Be the first to confess!</p>';
                 }
             }, (error) => {
                 console.error("Database error:", error);
