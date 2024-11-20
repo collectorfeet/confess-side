@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crush Form</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+</head>
+<body>	
+    <h1>Anonymous Confession</h1>
+        
+    <form id="confessionForm" onsubmit="return saveConfession(event)">
+        <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required>
+            
+        <label for="confession">Confession</label>
+            <textarea id="confession" name="confession" placeholder="Write who it is for and your message" required></textarea>
+        
+        <div class="terms-container">
+            <input type="checkbox" id="termsCheckbox" required>
+            <label for="termsCheckbox">I agree to the <a href="#" onclick="showTerms()">Terms and Conditions</a></label>
+            <div id="error-message" style="color: red; display: none;">Please accept the terms and conditions to continue.</div>
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="submissionResult" style="display: none;">
+        <h2>Confession Received!</h2>
+        <div id="submissionDetails"></div>
+        <button onclick="newConfession()">Submit Another Confession</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXg5kCtWHMKXSQ9rKsPwWA-WS-4o0gCAc",
+            authDomain: "confessionside.firebaseapp.com",
+            databaseURL: "https://confessionside-default-rtdb.firebaseio.com",
+            projectId: "confessionside",
+            storageBucket: "confessionside.firebasestorage.app",
+            messagingSenderId: "145558124396",
+            appId: "1:145558124396:web:3ca8b9a1023dc3d9fe2549",
+            measurementId: "G-50H59N3YGL"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
+        // Make functions available globally
+        window.saveConfession = async function(event) {
+            event.preventDefault();
+            
+            const checkbox = document.getElementById('termsCheckbox');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (!checkbox.checked) {
+                errorMessage.style.display = 'block';
+                return false;
+            }
+
+            const name = document.getElementById('name').value;
+            const confession = document.getElementById('confession').value;
+            const timestamp = new Date().toLocaleString();
+
+            try {
+                // Get the next confession number
+                const countRef = ref(database, 'confessionCount');
+                const snapshot = await get(countRef);
+                const currentCount = snapshot.val() || 0;
+                const confessionNumber = currentCount + 1;
+                
+                // Save the new count
+                await set(countRef, confessionNumber);
+                
+                // Save the confession
+                await set(ref(database, 'confessions/' + confessionNumber), {
+                    name: name,
+                    confession: confession,
+                    timestamp: timestamp,
+                    number: confessionNumber
+                });
+
+                // Show submission result
+                document.getElementById('confessionForm').style.display = 'none';
+                document.getElementById('submissionResult').style.display = 'block';
+                document.getElementById('submissionDetails').innerHTML = `
+                    <p><strong>Confession #${confessionNumber}</strong></p>
+                    <p><strong>Name:</strong> ${name}</p>
+                    <p><strong>Confession:</strong><br>${confession.replace(/\n/g, '<br>')}</p>
+                `;
+            } catch (error) {
+                alert('Error saving confession: ' + error.message);
+            }
+
+            return false;
+        };
+
+        window.newConfession = function() {
+            document.getElementById('confessionForm').reset();
+            document.getElementById('confessionForm').style.display = 'block';
+            document.getElementById('submissionResult').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        };
+
+        window.showTerms = function() {
+            alert('Terms and Conditions:\n\n1. Your confession will be anonymous\n2. Be respectful and kind\n3. No harmful or inappropriate content');
+        };
+    </script>
+</body>
+</html>
