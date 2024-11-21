@@ -57,11 +57,6 @@
                 min-height: 100px;
             }
 
-            .confession-item {
-                padding: 10px 0;
-                margin-bottom: 15px;
-            }
-
             button {
                 width: 100%;
                 padding: 10px;
@@ -76,19 +71,36 @@
                 margin-top: 20px;
             }
 
-            #recentConfessions {
+            #messageList {
                 margin-top: 30px;
             }
         }
 
         /* General improvements */
-        .confession-item {
+        .message-item {
             border-bottom: 1px solid var(--border);
             padding: 15px 0;
             margin-bottom: 20px;
+            position: relative;
         }
 
-        .confession-item:last-child {
+        .report-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.8em;
+            padding: 5px 10px;
+            background-color: var(--background-alt);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .report-button:hover {
+            opacity: 1;
+        }
+
+        .message-item:last-child {
             border-bottom: none;
         }
 
@@ -115,168 +127,520 @@
         button:hover {
             opacity: 0.9;
         }
+
+        /* Locked name field style */
+        .name-locked {
+            background-color: var(--background-alt);
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* Developer tools */
+        .dev-tools {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--background-body);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0 5px;
+        }
+
+        .close-modal:hover {
+            color: var(--text-bright);
+        }
+
+        .reported-message {
+            border: 1px solid var(--border);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .report-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-body);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .enter-button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: var(--button-base);
+            color: var(--button-text);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .enter-button:hover {
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            display: none;
+        }
     </style>
 </head>
-<body>	
-    <h1>Leave a message</h1>
-        
-    <form id="confessionForm" onsubmit="return saveConfession(event)">
-        <label for="name">Codename</label>
-            <input type="text" id="name" name="name" placeholder="Your codename" required>
+<body>
+    <div class="welcome-screen" id="welcomeScreen">
+        <h1 class="welcome-title">Leave a message!</h1>
+        <button class="enter-button" onclick="enterSite()">Enter 'Leave a message'</button>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <h1>Leave a message</h1>
             
-        <label for="confession">Message</label>
-            <textarea id="confession" name="confession" placeholder="Write who it is for and your message" required></textarea>
-        
-        <div class="terms-container">
-            <input type="checkbox" id="termsCheckbox" required>
-            <label for="termsCheckbox">I agree to the <a href="#" onclick="showTerms()">Terms and Conditions</a></label>
-            <div id="error-message" style="color: red; display: none;">Please accept the terms and conditions to continue.</div>
+        <form id="messageForm" onsubmit="return saveMessage(event)">
+            <div style="position: relative;">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your codename" required>
+                <small style="display: none;" id="nameLockedMessage">(Name is locked to this device)</small>
+            </div>
+            
+            <div>
+                <label for="messageText">Message</label>
+                <textarea id="messageText" name="messageText" placeholder="Write who it is for and your message" required></textarea>
+            </div>
+
+            <div class="terms-container">
+                <input type="checkbox" id="termsCheckbox" required>
+                <label for="termsCheckbox">I agree to the <a href="#" onclick="showTerms()">Terms and Conditions</a></label>
+                <div id="error-message" style="color: red; display: none;">Please agree to the terms before submitting.</div>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+
+        <div id="submissionResult" style="display: none;">
+            <h2>Thank You!</h2>
+            <div id="submissionDetails"></div>
+            <button onclick="newMessage()">Submit Another Message</button>
         </div>
 
-        <button type="submit">Submit</button>
-    </form>
-
-    <div id="submissionResult" style="display: none;">
-        <h2>Message Received!</h2>
-        <div id="submissionDetails"></div>
-        <button onclick="newConfession()">Submit another message</button>
-    </div>
-
-    <div id="recentConfessions" style="margin-top: 2em;">
-        <h2>Recent Messages</h2>
-        <div id="confessionsList">
-            <p>Loading messages...</p>
+        <div id="messageList">
+            <h2>Recent Messages</h2>
+            <div id="messages"></div>
         </div>
-    </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+        <div id="reportedMessagesModal" class="modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeReportedMessages()">&times;</button>
+                <h2>Reported Messages</h2>
+                <div id="reportedMessagesList"></div>
+            </div>
+        </div>
 
-        // Initialize Firebase
-        try {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDXg5kCtWHMKXSQ9rKsPwWA-WS-4o0gCAc",
-                authDomain: "confessionside.firebaseapp.com",
-                databaseURL: "https://confessionside-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "confessionside",
-                storageBucket: "confessionside.firebasestorage.app",
-                messagingSenderId: "145558124396",
-                appId: "1:145558124396:web:3ca8b9a1023dc3d9fe2549",
-                measurementId: "G-50H59N3YGL"
-            };
-
-            const app = initializeApp(firebaseConfig);
-            const analytics = getAnalytics(app);
-            const database = getDatabase(app);
-            console.log("Firebase initialized successfully");
-
-            // Listen for confessions updates
-            const confessionsRef = ref(database, 'confessions');
-            onValue(confessionsRef, (snapshot) => {
-                console.log("Received database update");
-                const data = snapshot.val();
-                const confessionsList = document.getElementById('confessionsList');
-                confessionsList.innerHTML = '';
-                
-                if (data) {
-                    console.log("Found confessions:", Object.keys(data).length);
-                    const confessions = Object.values(data).sort((a, b) => b.number - a.number);
-                    
-                    confessions.forEach(confession => {
-                        const confessionDiv = document.createElement('div');
-                        confessionDiv.className = 'confession-item';
-                        confessionDiv.innerHTML = `
-                            <p><strong>Message #${confession.number}</strong> - ${confession.timestamp}</p>
-                            <p><strong>From:</strong> ${confession.name}</p>
-                            <p><strong>Message:</strong><br>${confession.message.replace(/\n/g, '<br>')}</p>
-                            <hr>
-                        `;
-                        confessionsList.appendChild(confessionDiv);
-                    });
-                } else {
-                    console.log("No messages found");
-                    confessionsList.innerHTML = '<p>No messages yet. Be the first to send a message!</p>';
-                }
-            }, (error) => {
-                console.error("Database error:", error);
-            });
-
-            // Make functions available globally
-            window.saveConfession = async function(event) {
+        <script>
+            // Global functions that need to be accessible from HTML
+            async function saveMessage(event) {
                 event.preventDefault();
-                console.log("Form submission started");
+                console.log('Starting message submission...');
                 
-                const checkbox = document.getElementById('termsCheckbox');
-                const errorMessage = document.getElementById('error-message');
-                
-                if (!checkbox.checked) {
-                    errorMessage.style.display = 'block';
-                    console.log("Terms not accepted");
-                    return false;
-                }
-
-                const name = document.getElementById('name').value;
-                const message = document.getElementById('confession').value;
-                const timestamp = new Date().toLocaleString();
-                console.log("Form data collected");
-
                 try {
-                    console.log("Getting confession number");
-                    const countRef = ref(database, 'confessionCount');
-                    const snapshot = await get(countRef);
-                    const currentCount = snapshot.val() || 0;
-                    const confessionNumber = currentCount + 1;
-                    console.log("New confession number:", confessionNumber);
-                    
-                    console.log("Saving new count");
-                    await set(countRef, confessionNumber);
-                    
-                    console.log("Saving confession");
-                    await set(ref(database, 'confessions/' + confessionNumber), {
-                        name: name,
-                        message: message,
-                        timestamp: timestamp,
-                        number: confessionNumber
-                    });
+                    const firebaseInstance = window.firebaseInstance;
+                    if (!firebaseInstance) {
+                        throw new Error('Firebase not initialized');
+                    }
+                    console.log('Firebase instance found');
 
-                    console.log("Showing success message");
-                    document.getElementById('confessionForm').style.display = 'none';
+                    const { database, ref, get, set } = firebaseInstance;
+                    
+                    // Validate form
+                    const checkbox = document.getElementById('termsCheckbox');
+                    const errorMessage = document.getElementById('error-message');
+                    if (!checkbox.checked) {
+                        errorMessage.style.display = 'block';
+                        return false;
+                    }
+
+                    // Get form data
+                    const nameInput = document.getElementById('name');
+                    const name = nameInput.value;
+                    const message = document.getElementById('messageText').value;
+                    const timestamp = new Date().toLocaleString();
+                    
+                    console.log('Form data collected:', { name, message });
+
+                    // Handle name locking
+                    if (!localStorage.getItem('userName')) {
+                        localStorage.setItem('userName', name);
+                        nameInput.readOnly = true;
+                        nameInput.classList.add('name-locked');
+                        document.getElementById('nameLockedMessage').style.display = 'block';
+                    }
+
+                    // Get next message number
+                    console.log('Getting message number...');
+                    const countRef = ref(database, 'messageCount');
+                    const snapshot = await get(countRef);
+                    const messageNumber = (snapshot.val() || 0) + 1;
+                    console.log('Message number:', messageNumber);
+
+                    // Save message data
+                    console.log('Saving message data...');
+                    await set(countRef, messageNumber);
+                    await set(ref(database, 'messages/' + messageNumber), {
+                        name,
+                        message,
+                        timestamp,
+                        number: messageNumber,
+                        reports: 0
+                    });
+                    console.log('Message data saved');
+
+                    // Update UI
+                    document.getElementById('messageForm').style.display = 'none';
                     document.getElementById('submissionResult').style.display = 'block';
+                    
                     document.getElementById('submissionDetails').innerHTML = `
-                        <p><strong>Message #${confessionNumber}</strong></p>
-                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Message #${messageNumber}</strong></p>
+                        <p><strong>From:</strong> ${name}</p>
                         <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
                         <p><em>Your message has been added to the list below!</em></p>
                     `;
+                    console.log('Submission complete');
+
                 } catch (error) {
-                    console.error("Error saving confession:", error);
-                    alert('Error saving confession: ' + error.message);
+                    console.error('Error in saveMessage:', error);
+                    console.error('Error stack:', error.stack);
+                    alert(`Error saving message: ${error.message}\nPlease check the console for more details.`);
                 }
 
                 return false;
-            };
+            }
 
-            window.newConfession = function() {
-                document.getElementById('confessionForm').reset();
-                document.getElementById('confessionForm').style.display = 'block';
+            window.newMessage = function() {
+                document.getElementById('messageForm').reset();
+                document.getElementById('messageForm').style.display = 'block';
                 document.getElementById('submissionResult').style.display = 'none';
                 document.getElementById('error-message').style.display = 'none';
             };
 
-            window.showTerms = function() {
-                alert('Terms and Conditions:\n\n1. Your confession will be anonymous\n2. Be respectful and kind\n3. No harmful or inappropriate content');
+            window.showTerms = () => alert(
+                'Terms and Conditions:\n\n' +
+                '1. Beware of what you share. \n' +
+                '2. Be respectful and kind\n' +
+                '3. No harmful or inappropriate content\n' +
+                '4. Report if any of the following messages are found:\n' +
+                '\tA. Offensive\n\tB. Spam\n\tC. Harassment\n\tD. Abuse\n\n' +
+                'If you see any of these messages, report them by clicking the "Report" button.'
+            );
+
+            window.enterSite = function() {
+                const welcomeScreen = document.getElementById('welcomeScreen');
+                const mainContent = document.getElementById('mainContent');
+                
+                welcomeScreen.style.opacity = '0';
+                welcomeScreen.style.transition = 'opacity 0.5s ease-out';
+                
+                setTimeout(() => {
+                    welcomeScreen.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    mainContent.style.opacity = '0';
+                    mainContent.style.transition = 'opacity 0.5s ease-in';
+                    setTimeout(() => mainContent.style.opacity = '1', 50);
+                }, 500);
             };
+        </script>
 
-        } catch (error) {
-            console.error("Firebase initialization error:", error);
-            alert("Error initializing the app. Please check the console for details.");
-        }
-    </script>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+            import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+            import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
 
-    <div class="footer">
-        Created by Jayden D. Tordesillas
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDXg5kCtWHMKXSQ9rKsPwWA-WS-4o0gCAc",
+                    authDomain: "confessionside.firebaseapp.com",
+                    databaseURL: "https://confessionside-default-rtdb.asia-southeast1.firebasedatabase.app",
+                    projectId: "confessionside",
+                    storageBucket: "confessionside.appspot.com",
+                    messagingSenderId: "145558124396",
+                    appId: "1:145558124396:web:3ca8b9a1023dc3d9fe2549",
+                    measurementId: "G-50H59N3YGL"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                const analytics = getAnalytics(app);
+                const database = getDatabase(app);
+
+                // Store Firebase instances and functions in window for global access
+                window.firebaseInstance = {
+                    database,
+                    ref,
+                    get,
+                    set
+                };
+
+                // Keyboard shortcut for reported messages
+                document.addEventListener('keydown', function(event) {
+                    if (event.ctrlKey && event.altKey && event.key === 'R') {
+                        showReportedMessages();
+                    }
+                });
+
+                // Functions for reported messages
+                window.showReportedMessages = async function() {
+                    try {
+                        const messagesRef = ref(database, 'messages');
+                        const snapshot = await get(messagesRef);
+                        const data = snapshot.val();
+                        
+                        if (data) {
+                            const reportedMessages = Object.values(data)
+                                .filter(msg => msg.reports && msg.reports > 0)
+                                .sort((a, b) => b.reports - a.reports);
+                            
+                            const reportedMessagesList = document.getElementById('reportedMessagesList');
+                            reportedMessagesList.innerHTML = '';
+                            
+                            if (reportedMessages.length === 0) {
+                                reportedMessagesList.innerHTML = '<p>No reported messages.</p>';
+                            } else {
+                                reportedMessages.forEach(msg => {
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.innerHTML = `
+                                        <div class="reported-message">
+                                            <p><strong>Message #${msg.number}</strong> - Reports: ${msg.reports}</p>
+                                            <p><strong>From:</strong> ${msg.name}</p>
+                                            <p><strong>Message:</strong><br>${msg.message.replace(/\n/g, '<br>')}</p>
+                                            <p><em>${msg.timestamp}</em></p>
+                                            <hr>
+                                        </div>
+                                    `;
+                                    reportedMessagesList.appendChild(messageDiv);
+                                });
+                            }
+                            
+                            document.getElementById('reportedMessagesModal').style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('Error loading reported messages:', error);
+                        alert('Error loading reported messages. Please try again.');
+                    }
+                };
+
+                window.closeReportedMessages = function() {
+                    document.getElementById('reportedMessagesModal').style.display = 'none';
+                };
+
+                // Listen for messages updates
+                const messagesRef = ref(database, 'messages');
+                onValue(messagesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    const messagesList = document.getElementById('messages');
+                    messagesList.innerHTML = '';
+                    
+                    if (data) {
+                        const messages = Object.values(data)
+                            .sort((a, b) => b.number - a.number);
+                        
+                        messages.forEach(msg => {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'message-item';
+                            
+                            messageDiv.innerHTML = `
+                                <p><strong>Message #${msg.number}</strong> - ${msg.timestamp}</p>
+                                <p><strong>From:</strong> ${msg.name}</p>
+                                <p><strong>Message:</strong><br>${msg.message.replace(/\n/g, '<br>')}</p>
+                                <button onclick="reportMessage(${msg.number})" class="report-button">Report</button>
+                                <hr>
+                            `;
+                            messagesList.appendChild(messageDiv);
+                        });
+                    } else {
+                        messagesList.innerHTML = '<p>No messages yet. Be the first to share!</p>';
+                    }
+                });
+
+                // Report message function
+                window.reportMessage = async function(messageNumber) {
+                    try {
+                        const messageRef = ref(database, `messages/${messageNumber}`);
+                        const snapshot = await get(messageRef);
+                        const message = snapshot.val();
+                        
+                        if (message) {
+                            const reports = (message.reports || 0) + 1;
+                            await set(messageRef, { ...message, reports });
+                            alert('Message reported. Thank you for helping keep the community safe.');
+                        }
+                    } catch (error) {
+                        alert('Error reporting message. Please try again.');
+                    }
+                };
+
+                // Load saved name from local storage
+                const nameInput = document.getElementById('name');
+                const nameLockedMessage = document.getElementById('nameLockedMessage');
+                const savedName = localStorage.getItem('userName');
+
+                if (savedName) {
+                    nameInput.value = savedName;
+                    nameInput.readOnly = true;
+                    nameInput.classList.add('name-locked');
+                    nameLockedMessage.style.display = 'block';
+                }
+
+                // Secret keyboard shortcuts
+                document.addEventListener('keydown', function(e) {
+                    // Unlock name (Ctrl+Alt+U)
+                    if (e.ctrlKey && e.altKey && e.key === 'u') {
+                        e.preventDefault();
+                        if (nameInput.readOnly) {
+                            nameInput.readOnly = false;
+                            nameInput.classList.remove('name-locked');
+                            nameLockedMessage.style.display = 'none';
+                            nameInput.style.transition = 'background-color 0.3s';
+                            nameInput.style.backgroundColor = '#4CAF50';
+                            setTimeout(() => nameInput.style.backgroundColor = '', 300);
+                        }
+                    }
+                    // Show reported messages (Ctrl+Alt+R)
+                    else if (e.ctrlKey && e.altKey && e.key === 'r') {
+                        e.preventDefault();
+                        showReportedMessages();
+                    }
+                    // Show developer tools (Ctrl+Shift+D)
+                    else if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                        const devTools = document.createElement('div');
+                        devTools.className = 'dev-tools';
+                        devTools.innerHTML = `
+                            <h3>Developer Tools</h3>
+                            <button onclick="resetName()">Reset User Name</button>
+                        `;
+                        if (!document.querySelector('.dev-tools')) {
+                            document.body.appendChild(devTools);
+                            devTools.style.display = 'block';
+                        }
+                    }
+                });
+
+                // Global functions
+                window.resetName = function() {
+                    if (confirm('Are you sure you want to reset the user name? This will allow the user to enter a new name.')) {
+                        localStorage.removeItem('userName');
+                        nameInput.value = '';
+                        nameInput.readOnly = false;
+                        nameInput.classList.remove('name-locked');
+                        nameLockedMessage.style.display = 'none';
+                        alert('Name has been reset. User can now enter a new name.');
+                    }
+                };
+
+                window.showReportedMessages = async function() {
+                    const modal = document.getElementById('reportedMessagesModal');
+                    const messagesList = document.getElementById('reportedMessagesList');
+                    messagesList.innerHTML = '<p>Loading reported messages...</p>';
+                    modal.style.display = 'block';
+
+                    try {
+                        const snapshot = await get(messagesRef);
+                        const data = snapshot.val();
+                        
+                        if (data) {
+                            const reportedMessages = Object.values(data)
+                                .filter(msg => msg.reports && msg.reports > 0)
+                                .sort((a, b) => (b.reports || 0) - (a.reports || 0));
+
+                            messagesList.innerHTML = reportedMessages.length ? '' :
+                                '<p>No reported messages found.</p>';
+
+                            reportedMessages.forEach(msg => {
+                                const messageDiv = document.createElement('div');
+                                messageDiv.className = 'reported-message';
+                                messageDiv.innerHTML = `
+                                    <span class="report-count">${msg.reports} reports</span>
+                                    <p><strong>Message #${msg.number}</strong> - ${msg.timestamp}</p>
+                                    <p><strong>From:</strong> ${msg.name}</p>
+                                    <p><strong>Message:</strong><br>${msg.message.replace(/\n/g, '<br>')}</p>
+                                `;
+                                messagesList.appendChild(messageDiv);
+                            });
+                        } else {
+                            messagesList.innerHTML = '<p>No messages found in the database.</p>';
+                        }
+                    } catch (error) {
+                        messagesList.innerHTML = '<p>Error loading reported messages. Please try again.</p>';
+                    }
+                };
+
+                window.closeReportedMessages = () => 
+                    document.getElementById('reportedMessagesModal').style.display = 'none';
+
+                window.onclick = (event) => {
+                    const modal = document.getElementById('reportedMessagesModal');
+                    if (event.target === modal) modal.style.display = 'none';
+                };
+            } catch (error) {
+                alert("Error initializing the app. Please refresh the page and try again.");
+            }
+        </script>
+
+        <div class="footer">
+            Created by Jayden D. Tordesillas
+        </div>
     </div>
 </body>
 </html>
